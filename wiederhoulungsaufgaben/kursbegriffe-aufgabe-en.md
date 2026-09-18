@@ -190,7 +190,7 @@ A collection of software development tools, libraries, and documentation provide
 
 A cloud computing model where applications are hosted by a vendor and delivered to users over the internet as a subscription service.
 
-#### DBMS -> **Database Management System** 
+#### DBMS -> **Database Management System**
 
 Software used to store, manage, retrieve, and organize data in a database efficiently and securely.
 
@@ -250,8 +250,9 @@ A minimal, flexible, and fast web application framework for Node.js that simplif
 
 - Middleware
 
-Functions in Express that execute sequentially during the request-response cycle to inspect, modify, validate, or terminate incoming requests before reaching the final handler.
-!! only express?
+Functions that execute sequentially during the request-response cycle to inspect, modify, validate, or terminate incoming requests before reaching the final handler.
+
+Middleware is a general software design pattern used across many frameworks and languages (like Next.js, Fastify, Django in Python, and ASP.NET in C#). In web development, it simply refers to any function or layer that intercept requests on their way between the client and the final route handler.
 
 - Route
 
@@ -322,7 +323,6 @@ The data payload sent along with HTTP requests (commonly in POST, PUT, or PATCH 
 - Header
 
 Metadata key-value pairs attached to HTTP requests and responses used to communicate authentication tokens, content types, caching instructions, and server details.
-!! definition of metadata?
 
 - Status code
 
@@ -332,7 +332,7 @@ A 3-digit numerical code returned by a server indicating the outcome of an HTTP 
 
 The standard HTTP status code indicating that a client request succeeded and the server returned the requested data.
 
-- `201 Created` 
+- `201 Created`
 
 An HTTP status code indicating that a request succeeded and resulted in a new resource being successfully created on the server.
 
@@ -366,11 +366,11 @@ Any piece of data or object (like a user, product, or order) managed by an API t
 
 - `PUT`
 
-An HTTP method used to *completely replace* an existing resource with a new payload, or create it if it does not already exist.
+An HTTP method used to _completely replace_ an existing resource with a new payload, or create it if it does not already exist.
 
 - `PATCH`
 
-An HTTP method used to apply *partial updates* or modifications to an existing resource on the server without replacing the whole object.
+An HTTP method used to apply _partial updates_ or modifications to an existing resource on the server without replacing the whole object.
 
 - 404 fallback
 
@@ -378,8 +378,30 @@ A wildcard catch-all route placed at the end of an Express route setup to handle
 
 - Central error handling
 
-A unified middleware pattern in Express used to catch, format, and log all application errors in one single place.
-!! EXAMPLE?
+A unified middleware pattern in Express used to catch, format, and log all application errors in one single place. In Express, the central error handling is a special middleware function with 4 parameters (err, req, res, next).
+
+```JavaScript
+// 1. Central error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack); // Log the error on the server
+
+  res.status(err.status || 500).json({
+    error: true,
+    message: err.message || "Internal Server Error",
+  });
+});
+
+// 2. Any route can pass errors to it using next(err)
+app.get("/users/:id", async (req, res, next) => {
+  try {
+    const user = await findUser(req.params.id);
+    if (!user) throw new Error("User not found");
+    res.json(user);
+  } catch (err) {
+    next(err); // Handled by central error middleware above!
+  }
+});
+```
 
 - In-memory storage
 
@@ -391,8 +413,8 @@ A popular API platform tool used by developers to build, test, document, and deb
 
 - Pre-request
 
-A script executed in API testing tools (like Postman) immediately before sending an HTTP request, often used to set dynamic variables or authentication headers.
-!! tell me more
+A Pre-request script is code that runs automatically before Postman fires off an HTTP request. It is most commonly used to generate dynamic data (like timestamps, random emails, or calculated signatures) or to automatically retrieve an authentication token and attach it to the request headers.
+
 - Response test
 
 Automated assertions written in API clients (like Postman) that run after receiving a response to verify status codes, headers, and payload structures.
@@ -757,7 +779,15 @@ The business risk where an application becomes so deeply tied to a specific thir
 
 ## Other abbreviations or terms
 
+#### Metadata
+
+Is "data about data." Instead of being the main content of a message (like the actual JSON user object), metadata provides context about the message—such as how big the payload is, what format it is written in (Content-Type: application/json), or who sent it (Authorization: Bearer token).
+
 #### Edge Cases
+
+Edge Cases are extreme, unusual, or rare scenarios that occur at the far boundaries of an application's expected operating conditions.
+
+While a typical "happy path" assumes users input valid data under normal circumstances, edge cases involve unexpected inputs, hardware limits, or race conditions that test whether a system breaks under pressure.
 
 #### MCP -> **Model Context Protocol**
 

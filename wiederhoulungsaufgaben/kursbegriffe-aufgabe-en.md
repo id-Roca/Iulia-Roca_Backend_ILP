@@ -893,7 +893,7 @@ An HTTP request made by client code running on one origin to a completely differ
 
 - CORS headers
 
-Specific HTTP response headers (Access-Control-*) sent by a server to signal to the browser which cross-origin applications are permitted to access its resources.
+Specific HTTP response headers (Access-Control-\*) sent by a server to signal to the browser which cross-origin applications are permitted to access its resources.
 
 - Preflight
 
@@ -901,7 +901,7 @@ An automatic OPTIONS HTTP request sent by browsers before a cross-origin request
 
 - `Access-Control-Allow-Origin`
 
-The key CORS response header specifying which requesting origins (or * for all) are allowed to read the response.
+The key CORS response header specifying which requesting origins (or \* for all) are allowed to read the response.
 
 - `Access-Control-Allow-Methods`
 

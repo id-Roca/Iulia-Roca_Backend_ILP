@@ -1,19 +1,21 @@
-let companies = [
-  { id: 1, name: "Acme Corp", industry: "Technology" },
-  { id: 2, name: "Stark Industries", industry: "Defense" },
-];
+import prisma from "../prisma.js";
 
-let companyNextId = 3;
-
-const findCompanyById = (id) => companies.find((c) => c.id === Number(id));
-
-export const getAllCompanies = (req, res) => {
-  res.json(companies);
+export const getAllCompanies = async (req, res, next) => {
+  try {
+    const companies = await prisma.company.findMany();
+    res.json(companies);
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const getCompaniesById = (req, res, next) => {
+export const getCompaniesById = async (req, res, next) => {
   try {
-    const company = findCompanyById(req.params.id);
+    const company = await prisma.company.findUnique({
+      where: {
+        id: Number(req.params.id),
+      },
+    });
 
     if (!company) {
       const error = new Error("Company not found.");
@@ -26,7 +28,7 @@ export const getCompaniesById = (req, res, next) => {
   }
 };
 
-export const createNewCompany = (req, res, next) => {
+export const createNewCompany = async (req, res, next) => {
   try {
     const { name, industry } = req.body;
 
@@ -36,13 +38,12 @@ export const createNewCompany = (req, res, next) => {
       throw error;
     }
 
-    const newCompany = {
-      id: companyNextId++,
-      name,
-      industry,
-    };
-
-    companies.push(newCompany);
+    const newCompany = await prisma.company.create({
+      data: {
+        name,
+        industry,
+      },
+    });
 
     res.status(201).json(newCompany);
   } catch (error) {
@@ -50,75 +51,44 @@ export const createNewCompany = (req, res, next) => {
   }
 };
 
-export const putCompany = (req, res, next) => {
+// Prisma treats PUT and PATCH the same, do not forget :)
+export const updateCompany = async (req, res, next) => {
   try {
-    const company = findCompanyById(req.params.id);
-
-    if (!company) {
-      const error = new Error("Company not found.");
-      error.statusCode = 404;
-      throw error;
-    }
-
     const { name, industry } = req.body;
 
-    if (!name || !industry) {
-      const error = new Error("Name and industry are required.");
-      error.statusCode = 400;
-      throw error;
-    }
+    const updatedCompany = await prisma.company.update({
+      where: {
+        id: Number(req.params.id),
+      },
+      data: {
+        name,
+        industry,
+      },
+    });
 
-    company.name = name;
-    company.industry = industry;
-
-    res.json(company);
+    res.json(updatedCompany);
   } catch (error) {
     next(error);
   }
 };
 
-export const updateCompany = (req, res, next) => {
+export const deleteCompany = async (req, res, next) => {
   try {
-    const company = findCompanyById(req.params.id);
-
-    if (!company) {
-      const error = new Error("Company not found");
-      error.statusCode = 404;
-      throw error;
-    }
-
-    const { name, industry } = req.body;
-
-    if (name !== undefined) {
-      company.name = name;
-    }
-
-    if (industry !== undefined) {
-      company.industry = industry;
-    }
-
-    res.json(company);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const deleteCompany = (req, res, next) => {
-  try {
-    const index = companies.findIndex(
-      (company) => company.id === Number(req.params.id),
-    );
-
-    if (index === -1) {
-      const error = new Error(`No company with ID ${req.params.id} found.`);
-      error.statusCode = 404;
-      throw error;
-    }
-
-    companies.splice(index, 1);
+    const id = Number(req.params.id);
+    await prisma.company.delete({ where: { id } });
 
     res.status(204).end();
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    if (err.code === "P2025") {
+      err.statusCode = 404;
+      err.message = "Company not found";
+    }
+
+    if (err.code === "P2003") {
+      err.statusCode = 409;
+      err.message = "Cannot delete a company that still has contacts";
+    }
+
+    next(err);
   }
 };

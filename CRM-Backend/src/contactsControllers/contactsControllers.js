@@ -1,22 +1,23 @@
-let contacts = [
-  { id: 1, name: "Anna", email: "anna@acme.com", companyId: 1 },
-  { id: 2, name: "Bob", email: "bob@acme.com", companyId: 1 },
-  { id: 3, name: "Sarah", email: "sarah@stark.com", companyId: 2 },
-  { id: 4, name: "John", email: "john@acme.com", companyId: 1 },
-  { id: 5, name: "Ken", email: "ken@stark.com", companyId: 2 },
-];
+import prisma from "../prisma.js";
 
-let contactNextId = 6;
-
-const findContactsById = (id) => contacts.find((c) => c.id === Number(id));
-
-export const getAllContacts = (req, res) => {
-  res.json(contacts);
+//  GET all
+export const getAllContacts = async (req, res, next) => {
+  try {
+    const contact = await prisma.contact.findMany();
+    res.json(contact);
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const getContactsById = (req, res, next) => {
+// GET specific
+export const getContactsById = async (req, res, next) => {
   try {
-    const contact = findContactsById(req.params.id);
+    const contact = await prisma.contact.findUnique({
+      where: {
+        id: Number(req.params.id),
+      },
+    });
 
     if (!contact) {
       const error = new Error("Contact not found");
@@ -29,93 +30,60 @@ export const getContactsById = (req, res, next) => {
   }
 };
 
-export const createNewContact = (req, res, next) => {
+// POST
+export const createNewContact = async (req, res, next) => {
   try {
     const { name, email, companyId } = req.body;
 
-    if (!name || !email || Number.isNaN(companyId)) {
+    if (!name || !email || Number.isNaN(Number(companyId))) {
       const error = new Error("Contact information required");
       error.statusCode = 400;
       throw error;
     }
 
-    const newContact = {
-      id: contactNextId++,
-      name,
-      email,
-      companyId: Number(companyId),
-    };
+    const newContact = await prisma.contact.create({
+      data: { name, email, companyId: Number(companyId) },
+    });
 
-    contacts.push(newContact);
     res.status(201).json(newContact);
   } catch (error) {
     next(error);
   }
 };
 
-export const putContact = (req, res, next) => {
+export const updateContact = async (req, res, next) => {
   try {
-    const contact = findContactsById(req.params.id);
-    if (!contact) {
-      const error = new Error("Contact not found");
-      error.statusCode = 404;
-      throw error;
-    }
+    const { name, email, companyId } = req.body;
 
-    const { name, email } = req.body;
+    const updatedContact = await prisma.contact.update({
+      where: {
+        id: Number(req.params.id),
+      },
+      data: {
+        name,
+        email,
+        companyId: companyId !== undefined ? Number(companyId) : undefined,
+      },
+    });
 
-    if (!name || !email) {
-      const error = new Error("Name and email are required");
-      error.statusCode = 400;
-      throw error;
-    }
-
-    contact.name = name;
-    contact.email = email;
-
-    res.json(contact);
+    res.json(updatedContact);
   } catch (error) {
     next(error);
   }
 };
 
-export const updateContact = (req, res, next) => {
+export const deleteContact = async (req, res, next) => {
   try {
-    const contact = findContactsById(req.params.id);
+    const id = Number(req.params.id);
+    await prisma.contact.delete({ where: { id } });
 
-    if (!contact) {
-      const error = new Error("Contact not found");
-      error.statusCode = 404;
-      throw error;
-    }
-    const { name, email } = req.body;
-
-    if (name !== undefined) {
-      contact.name = name;
-    }
-
-    if (email !== undefined) {
-      contact.email = email;
-    }
-    res.json(contact);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const deleteContact = (req, res, next) => {
-  try {
-    const index = contacts.findIndex(
-      (contact) => contact.id === Number(req.params.id),
-    );
-    if (index === -1) {
-      const error = new Error(`No contact with ID ${req.params.id} found`);
-      error.statusCode = 404;
-      throw error;
-    }
-    contacts.splice(index, 1);
     res.status(204).end();
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    if (err.code === "P2025") {
+      err.statusCode = 404;
+      err.message = "Contact not found";
+    }
+
+    next(err);
   }
 };

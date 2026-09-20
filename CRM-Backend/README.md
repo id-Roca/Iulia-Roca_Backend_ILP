@@ -51,3 +51,8 @@ To keep the project focused on core CRM features, full Enterprise Resource Plann
 
 ## 🔮 Future Improvements
 * Desktop client interface built on top of the existing REST API.
+
+
+
+## NICE TO HAVEs - look into sorting the companies by id
+## MUST improve - error handling for posting new contacts for unexisting companies

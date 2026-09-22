@@ -1,4 +1,5 @@
 import prisma from "../src/prisma.js";
+import bcrypt from "bcrypt";
 
 async function main() {
   const acme = await prisma.company.create({
@@ -7,12 +8,14 @@ async function main() {
       industry: "Technology",
     },
   });
+
   const stark = await prisma.company.create({
     data: {
       name: "Stark Industries",
       industry: "Defense",
     },
   });
+
   await prisma.contact.createMany({
     data: [
       {
@@ -41,6 +44,37 @@ async function main() {
         companyId: stark.id,
       },
     ],
+    skipDuplicates: true,
+  });
+
+  const passwordHash = await bcrypt.hash("Admin123!", 10);
+
+  await prisma.user.upsert({
+    where: {
+      email: "admin@crm.local",
+    },
+    update: {},
+    create: {
+      name: "Admin User",
+      email: "admin@crm.local",
+      passwordHash,
+      role: "ADMIN",
+    },
+  });
+
+  const salesPasswordHash = await bcrypt.hash("Sales123!", 10);
+
+  await prisma.user.upsert({
+    where: {
+      email: "sales@crm.local",
+    },
+    update: {},
+    create: {
+      name: "Sales User",
+      email: "sales@crm.local",
+      passwordHash: salesPasswordHash,
+      role: "SALES",
+    },
   });
 }
 

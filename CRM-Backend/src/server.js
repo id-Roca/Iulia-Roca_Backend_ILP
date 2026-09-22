@@ -2,6 +2,7 @@ import express from "express";
 import companyRoutes from "./routes/companyRoutes.js";
 import contactsRoutes from "./routes/contactsRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -11,6 +12,7 @@ app.use(express.json());
 
 app.use("/api", companyRoutes);
 app.use("/api", contactsRoutes);
+app.use("/api", authRoutes);
 
 app.use(notFound);
 

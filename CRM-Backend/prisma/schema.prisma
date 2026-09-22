@@ -14,7 +14,7 @@ datasource db {
 }
 
 model Company {
-  id       Int    @id @default(autoincrement())
+  id       Int       @id @default(autoincrement())
   name     String
   industry String
   contacts Contact[]
@@ -26,4 +26,19 @@ model Contact {
   email     String  @unique
   companyId Int
   company   Company @relation(fields: [companyId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  SALES
+  SUPPORT
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(SALES)
+  createdAt    DateTime @default(now())
 }

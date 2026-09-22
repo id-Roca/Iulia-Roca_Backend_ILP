@@ -6,14 +6,40 @@ import {
   updateContact,
   deleteContact,
 } from "../contactsControllers/contactsControllers.js";
+import { authenticateToken } from "../middleware/authMiddleware.js";
+import { authorizeRoles } from "../middleware/autorizeRoles.js";
 
 const router = express.Router();
 
-router.get("/contacts", getAllContacts);
-router.get("/contacts/:id", getContactsById);
-router.post("/contacts", createNewContact);
-router.patch("/contacts/:id", updateContact);
-router.put("/contacts/:id", updateContact);
-router.delete("/contacts/:id", deleteContact);
+router.get(
+  "/contacts",
+  authenticateToken,
+  authorizeRoles("ADMIN", "SALES", "SUPPORT"),
+  getAllContacts,
+);
+router.get(
+  "/contacts/:id",
+  authenticateToken,
+  authorizeRoles("ADMIN", "SALES", "SUPPORT"),
+  getContactsById,
+);
+router.post(
+  "/contacts",
+  authenticateToken,
+  authorizeRoles("ADMIN", "SALES", "SUPPORT"),
+  createNewContact,
+);
+router.patch(
+  "/contacts/:id",
+  authenticateToken,
+  authorizeRoles("ADMIN", "SALES", "SUPPORT"),
+  updateContact,
+);
+router.delete(
+  "/contacts/:id",
+  authenticateToken,
+  authorizeRoles("ADMIN"),
+  deleteContact,
+);
 
 export default router;

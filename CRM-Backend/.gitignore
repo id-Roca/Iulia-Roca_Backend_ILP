@@ -4,4 +4,4 @@ node_modules
 
 /src/generated/prisma
 
-text.txt
+test.txt

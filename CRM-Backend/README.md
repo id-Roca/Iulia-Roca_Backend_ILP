@@ -1,58 +1,256 @@
-# CRM Learning Project
+# CRM Backend API
 
-A full-stack Customer Relationship Management (CRM) web application designed for a small business. Built to practice end-to-end development, this project handles everything from user roles and sales pipelines to support tickets and simple notifications.
+A REST API for a small Customer Relationship Management (CRM) system.
 
----
+The project manages companies, their contacts, and CRM users. It was built as a backend learning project using Node.js, Express, PostgreSQL, and Prisma.
 
-## 🎯 Goal
-Build a practical, multi-user CRM system to strengthen full-stack development skills—from designing the relational database to crafting the client interface.
+## Tech Stack
 
----
+- Node.js
+- Express.js
+- PostgreSQL
+- Prisma ORM
+- JSON Web Tokens (JWT)
+- bcrypt
+- CORS
+- express-rate-limit
 
-## ✨ Features
+## Features
 
-* **Multi-User & Role Management**: Supports different permissions for roles including **Admin**, **Team Lead**, **Sales**, and **Customer Service**.
-* **Companies & Contacts**: Track customer organizations and their associated individual contacts (one-to-many relationship).
-* **End-to-End Sales Pipeline**: 
-  * Lead flow: **Offer → Order → Invoice → Delivery**
-  * Support for **partial deliveries** on orders.
-* **Customer Support & Ticketing**:
-  * Tickets linked to a specific company, contact, or order.
-  * Explicit tracking for **Created By** vs. **Assigned To** users.
-* **In-App Notifications**: Lightweight alerts to notify users of ticket assignments and updates.
-* **Dynamic Data Calculation**: Derived metrics (e.g., ticket counts, total sales values) are calculated on-the-fly rather than hardcoded in the database.
+- Create, read, update, and delete companies
+- Create, read, update, and delete contacts
+- Companies can have multiple contacts
+- User management for administrators
+- JWT-based authentication
+- Role-based authorization
+- Password hashing with bcrypt
+- Centralized error handling
+- CORS configuration
+- API and login rate limiting
 
----
+## Entity Relationship Diagram
 
-## 🛠 Tech Stack & Architecture
+```mermaid
+erDiagram
+    COMPANY ||--o{ CONTACT : has
 
-### High-Level Architecture
+    COMPANY {
+        Int id PK
+        String name
+        String industry
+    }
 
-The project follows a decoupled client-server model. A single Express API serves the web interface today and will support an optional desktop client in the future without backend modifications.
+    CONTACT {
+        Int id PK
+        String name
+        String email UK
+        Int companyId FK
+    }
 
-[ Web Client ]
+    USER {
+        Int id PK
+        String name
+        String email UK
+        String passwordHash
+        Role role
+        DateTime createdAt
+    }
+```
 
-+---> [ Express REST API ] ---> [ Prisma ORM ] ---> [ PostgreSQL ]
-[ Desktop Client ] /  (Planned)
+## User Roles
 
-### Planned Technologies
-* **Frontend**: HTML, CSS, Tailwind CSS, JavaScript
-* **Backend**: Node.js, Express (REST API)
-* **Database & ORM**: PostgreSQL, Prisma ORM
+The API currently supports three roles:
 
----
+- `ADMIN`
+- `SALES`
+- `SUPPORT`
 
-## 🚫 Out of Scope
-To keep the project focused on core CRM features, full Enterprise Resource Planning (ERP) capabilities are intentionally excluded:
-* No warehouse stock or inventory management
-* No HR or payroll systems
+All authenticated users can access normal CRM functionality.
 
----
+Deleting companies or contacts is restricted to `ADMIN`.
 
-## 🔮 Future Improvements
-* Desktop client interface built on top of the existing REST API.
+User management is also restricted to `ADMIN`.
 
+## Authentication
 
+Users log in through:
 
-## NICE TO HAVEs - look into sorting the companies by id
-## MUST improve - error handling for posting new contacts for unexisting companies
+`POST /api/auth/login`
+
+Example request:
+
+```json
+{
+  "email": "user@example.com",
+  "password": "password"
+}
+```
+
+After successful authentication, the API returns a JWT.
+
+Protected endpoints require the token in the Authorization header:
+
+```text
+Authorization: Bearer <token>
+```
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint          | Access |
+| ------ | ----------------- | ------ |
+| POST   | `/api/auth/login` | Public |
+
+### Companies
+
+| Method | Endpoint             | Access        |
+| ------ | -------------------- | ------------- |
+| GET    | `/api/companies`     | Authenticated |
+| GET    | `/api/companies/:id` | Authenticated |
+| POST   | `/api/companies`     | Authenticated |
+| PATCH  | `/api/companies/:id` | Authenticated |
+| DELETE | `/api/companies/:id` | ADMIN         |
+
+Example company request:
+
+```json
+{
+  "name": "Acme Corp",
+  "industry": "Technology"
+}
+```
+
+### Contacts
+
+| Method | Endpoint            | Access        |
+| ------ | ------------------- | ------------- |
+| GET    | `/api/contacts`     | Authenticated |
+| GET    | `/api/contacts/:id` | Authenticated |
+| POST   | `/api/contacts`     | Authenticated |
+| PATCH  | `/api/contacts/:id` | Authenticated |
+| DELETE | `/api/contacts/:id` | ADMIN         |
+
+Example contact request:
+
+```json
+{
+  "name": "Anna Example",
+  "email": "anna@example.com",
+  "companyId": 1
+}
+```
+
+### Users
+
+All user management endpoints require the `ADMIN` role.
+
+| Method | Endpoint         |
+| ------ | ---------------- |
+| GET    | `/api/users`     |
+| GET    | `/api/users/:id` |
+| POST   | `/api/users`     |
+| PATCH  | `/api/users/:id` |
+| DELETE | `/api/users/:id` |
+
+Example user request:
+
+```json
+{
+  "name": "Sales User",
+  "email": "sales@example.com",
+  "password": "example-password",
+  "role": "SALES"
+}
+```
+
+## Security
+
+The API includes several security measures:
+
+- Passwords are hashed using bcrypt and are never stored as plain text.
+- JWTs are used to authenticate protected requests.
+- Role-based authorization restricts sensitive operations.
+- CORS restricts browser access to the configured frontend origin.
+- General API rate limiting allows a maximum of 100 requests per 10 minutes.
+- Login attempts are limited to 5 requests per 15 minutes.
+- Environment variables are used for sensitive configuration.
+- Invalid requests and database errors are handled through centralized error handling.
+
+## HTTP Status Codes
+
+The API uses standard HTTP status codes, including:
+
+| Status | Meaning                            |
+| ------ | ---------------------------------- |
+| `200`  | Successful request                 |
+| `201`  | Resource created                   |
+| `204`  | Resource deleted successfully      |
+| `400`  | Invalid request                    |
+| `401`  | Authentication required or invalid |
+| `403`  | Authenticated but not authorized   |
+| `404`  | Resource or route not found        |
+| `409`  | Resource conflict                  |
+| `429`  | Too many requests                  |
+| `500`  | Internal server error              |
+
+## Setup
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create a `.env` file with the required environment variables:
+
+```env
+PORT=3000
+DATABASE_URL="your_postgresql_connection_string"
+JWT_SECRET="your_secret_key"
+```
+
+Run the Prisma migrations:
+
+```bash
+npx prisma migrate dev
+```
+
+Start the API:
+
+```bash
+npm start
+```
+
+The API will run by default at:
+
+```text
+http://localhost:3000
+```
+
+## Project Structure
+
+```text
+CRM-Backend/
+├── prisma/
+│   ├── migrations/
+│   ├── schema.prisma
+│   └── seed.js
+├── src/
+│   ├── authControllers/
+│   ├── companyControllers/
+│   ├── contactsControllers/
+│   ├── userControllers/
+│   ├── middleware/
+│   ├── routes/
+│   ├── prisma.js
+│   └── server.js
+├── .env
+├── .gitignore
+├── package.json
+└── README.md
+```
+
+## Development Status
+
+This project currently provides the backend foundation for a CRM application. A frontend can be connected to the REST API in a later development stage.

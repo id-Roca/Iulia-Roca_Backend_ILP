@@ -2,7 +2,11 @@ import prisma from "../prisma.js";
 
 export const getAllCompanies = async (req, res, next) => {
   try {
-    const companies = await prisma.company.findMany();
+    const companies = await prisma.company.findMany({
+      orderBy: {
+        id: "asc",
+      }
+    });
     res.json(companies);
   } catch (error) {
     next(error);

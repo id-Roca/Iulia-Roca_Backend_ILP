@@ -3,7 +3,11 @@ import prisma from "../prisma.js";
 //  GET all
 export const getAllContacts = async (req, res, next) => {
   try {
-    const contact = await prisma.contact.findMany();
+    const contact = await prisma.contact.findMany({
+      orderBy: {
+        id: "asc",
+      },
+    });
     res.json(contact);
   } catch (error) {
     next(error);
